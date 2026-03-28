@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minha-app
+  namespace: production
+  labels:
+    app: minha-app
+spec:
+  type: ClusterIP          # use LoadBalancer se não tiver Ingress
+  selector:
+    app: minha-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000

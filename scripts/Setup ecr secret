@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# setup-ecr-secret.sh
+# Cria/atualiza o imagePullSecret do ECR no namespace do EKS.
+# Execute UMA VEZ (ou quando as credenciais expirarem).
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+AWS_REGION="${AWS_REGION:-us-east-1}"
+AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:?Defina AWS_ACCOUNT_ID}"
+NAMESPACE="${NAMESPACE:-production}"
+SECRET_NAME="ecr-secret"
+
+ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+
+echo "🔐 Gerando token ECR..."
+ECR_PASSWORD=$(aws ecr get-login-password --region "$AWS_REGION")
+
+echo "📦 Criando secret '${SECRET_NAME}' no namespace '${NAMESPACE}'..."
+kubectl create secret docker-registry "$SECRET_NAME" \
+    --docker-server="$ECR_REGISTRY" \
+    --docker-username=AWS \
+    --docker-password="$ECR_PASSWORD" \
+    --namespace="$NAMESPACE" \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+echo "✅ Secret criado/atualizado com sucesso!"
